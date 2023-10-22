@@ -3,24 +3,42 @@ const parsePage = () => {
 	let host = document.location.hostname
 
 	var found = '';
+	console.warn('RemovePayWall', paywalls.length)
 	
 	for (var idx = 0; idx < paywalls.length; idx++){
-		console.log('here',idx)
-		
 		let pw = paywalls[ idx ];
+		
 		if (pw.site.indexOf( host ) > -1){
-			console.log('Found', host, pw.selector)
-			let div = document.querySelector( `${pw.selector}` );
-			console.log('Selector', (div ? 'found' : 'not found'))
-			
-			if (div){
-				document.body.removeChild( div );
-				document.body.style.position = 'initial'
-				found = pw.site;
-			} else {
-				console.log('Not found', pw.selector)
-			}		
-		}	
+			console.warn(idx, 'Found', pw.site, pw.elements)
+			pw.elements.forEach( (el,inc)=>{
+			    let div = document.querySelector( el.selector );
+			    if (div){
+			        console.warn(inc, 'Selector matched element', el.selector)
+			        
+				    if (el.action == 'remove')
+				        div.parentElement.removeChild( div );
+				        
+				    else {
+				        var styles = el.action.split(';')
+				        console.log(styles)
+				        styles.forEach( s=>{
+				            let attr = s.split(':')
+				            console.warn('Setting style',attr[0] , ':', attr[1])
+				            
+				            div.style[attr[0]] = attr[1]
+				        })
+				    }
+				    
+				    // default action
+				    //document.body.style.position = 'initial'
+				    found = pw.site;
+			    } else {
+				    console.warn(inc,'Not matched', el.selector )
+			    }			
+			})		
+		} else {
+		    console.log( idx, pw.site, 'ignored because', host)
+		}
 	}
 	
 	
@@ -44,31 +62,3 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     	}
   });
 });
-
-/*
-async function getCurrentTab() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  let [tab] = await chrome.tabs.query(queryOptions);
-  return tab;
-}
-
-getCurrentTab().then(tab=>{
-	let url = tab.url.trim()
-	let host = url.split('/')[2]
-	
-	console.log(`'${url}'`, `'${host}'`)
-	
-	paywalls.forEach(pw=>{
-		if (pw.site.indexOf( host ) > -1){
-			console.log('Found', host, pw.selector)
-			let div = document.querySelector( `${pw.selector}` );
-			console.log('Selector', (div ? 'found' : 'not found'))
-			
-			if (div){
-				document.body.removeChild( div );
-				document.body.style.position = 'initial'
-				spinner.src = '../images/check.png'
-			}			
-		}
-	})
-})*/
